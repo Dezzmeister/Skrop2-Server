@@ -1,14 +1,8 @@
 package com.dezzy.skrop2_server.game;
 
-public enum WinCondition {
-	FIRST_TO_X_POINTS(false),
-	FIRST_TO_X_RECTS(true),
-	TIMER_RECTS(true),
-	TIMER_POINTS(false);
+public interface WinCondition {
 	
-	public final boolean countRects;
+	public String getName();
 	
-	private WinCondition(boolean _countRects) {
-		countRects = _countRects;
-	}
+	public String getInfoString(final String winConditionArg);
 }

@@ -20,6 +20,7 @@ import com.dezzy.skrop2_server.net.udp.UDPServer;
 public class Game {
 	public volatile GameState gameState = GameState.NO_GAME;
 	
+	private final String gameName;
 	private final String serverName;
 	
 	private final Server infoServer;
@@ -34,18 +35,27 @@ public class Game {
 	private LocalGame localGame;
 	private Thread localGameThread;
 	
+	private final Class<? extends LocalGame> gameClass;
+	private final Class<? extends Player> playerClass;
+	private final WinCondition[] possibleWinConditions;
+	
 	/**
 	 * Creates a Game and opens a TCP socket for the info server as well as several TCP sockets
 	 * for each client. A total of <code>serverCount</code> sockets are opened, with consecutive ports
 	 * starting at <code>startPort</code>.
 	 * 
+	 * @param _gameName the name of the game running on this server
 	 * @param _serverName the name of the server
 	 * @param infoServerPort info server port
 	 * @param startPort port of first client server
 	 * @param serverCount number of client servers
+	 * @param _gameClass the type of game to create when a create-game request is fulfilled
+	 * @param _playerClass the type of player to add to the game
+	 * @param _possibleWinConditions every potential win condition, so that the server can pick a default or match a requested win condition
 	 * @throws IOException if there is an error creating the server sockets
 	 */
-	public Game(final String _serverName, int infoServerPort, int startPort, int serverCount) throws IOException {
+	public Game(final String _gameName, final String _serverName, int infoServerPort, int startPort, int serverCount, final Class<? extends LocalGame> _gameClass, final Class<? extends Player> _playerClass, final WinCondition[] _possibleWinConditions) throws IOException {
+		gameName = _gameName;
 		serverName = _serverName;
 		
 		infoServer = new Server(this, infoServerPort, -1);
@@ -58,18 +68,22 @@ public class Game {
 		
 		for (int i = 0; i < serverCount; i++) {
 			servers[i] = new Server(this, startPort + i, i);
-			serverThreads[i] = new Thread(servers[i], "Skrop 2 " + serverName + " TCP Game Server Thread " + i);
+			serverThreads[i] = new Thread(servers[i], gameName + " " + serverName + " TCP Game Server Thread " + i);
 			serverThreads[i].start();
 			
 			udpServers[i] = new UDPServer(startPort + i);
-			udpServerThreads[i] = new Thread(udpServers[i], "Skrop 2 " + serverName + " UDP Game Server Thread " + i);
+			udpServerThreads[i] = new Thread(udpServers[i], gameName + " " + serverName + " UDP Game Server Thread " + i);
 			udpServerThreads[i].start();
 			
 			inUse[i] = false;
 		}
 		
-		infoServerThread = new Thread(infoServer, "Skrop 2 " + serverName + " Info Server Thread");
+		infoServerThread = new Thread(infoServer, gameName + " " + serverName + " Info Server Thread");
 		infoServerThread.start();
+		
+		gameClass = _gameClass;
+		playerClass = _playerClass;
+		possibleWinConditions = _possibleWinConditions;
 	}
 	
 	/**
@@ -90,8 +104,18 @@ public class Game {
 		if (header.equals("init-player")) { //A new player has connected to the server
 			if (gameState == GameState.WAITING_FOR_PLAYERS) {
 				String name = body.substring(body.indexOf(":") + 1);
-				localGame.addPlayer(clientID, name);
-				System.out.println("Player \"" + name.replace('_', ' ') + "\" has connected to the server on port " + servers[clientID].port);
+				try {
+					Player player = playerClass.getDeclaredConstructor(String.class).newInstance(name);
+					
+					localGame.addPlayer(clientID, player);
+					System.out.println("Player \"" + name.replace('_', ' ') + "\" has connected to the server on port " + servers[clientID].port);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.err.println("Player \"" + name + "\" tried to connect on port " + servers[clientID].port + " but could not be added to the game, disconnecting...");
+					servers[clientID].closeConnection();
+					udpServers[clientID].reset();
+					inUse[clientID] = false;
+				}
 			}
 			
 			inUse[clientID] = true;
@@ -100,7 +124,7 @@ public class Game {
 			
 			if (checkAllPlayersJoined() && checkAllUDPServersBound()) {
 				gameState = GameState.BEGINNING;
-				System.out.println("All players are connected, beginning the game countdown...");
+				System.out.println("All players are connected, beginning the game");
 			}
 		} else if (header.equals("quit")) {
 			if (clientID >= 0) {
@@ -111,10 +135,14 @@ public class Game {
 		} else if (header.equals("c")) {
 			if (gameState == GameState.IN_GAME) {
 				if (body.contains(":")) {
-					float x = Float.parseFloat(body.substring(0, body.indexOf(":")));
-					float y = Float.parseFloat(body.substring(body.indexOf(":") + 1));
-					
-					localGame.processClickEvent(clientID, x, y);
+					try {
+						float x = Float.parseFloat(body.substring(0, body.indexOf(":")));
+						float y = Float.parseFloat(body.substring(body.indexOf(":") + 1));
+						
+						localGame.processClickEvent(clientID, x, y);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				} else {
 					System.err.println("Malformed body in click event received from client: \"" + body + "\"");
 				}
@@ -205,11 +233,11 @@ public class Game {
 			if (gameState == GameState.NO_GAME) {
 				String[] fields = body.split(" ");
 				
-				String gameName = "Skrop 2 Game";
+				String playerGameName = gameName + " Game";
 				
 				int maxPlayers = 2;
-				WinCondition winCondition = WinCondition.FIRST_TO_X_POINTS;
-				int winConditionArg = 500;
+				WinCondition winCondition = possibleWinConditions[0];
+				String winConditionArg = "";
 				
 				for (String s : fields) {
 					if (s.contains(":")) {
@@ -217,39 +245,36 @@ public class Game {
 						String fieldBody = s.substring(s.indexOf(":") + 1);
 						
 						if (fieldHeader.equals("name")) {
-							gameName = fieldBody.replace('_', ' ');
+							playerGameName = fieldBody.replace('_', ' ');
 						} else if (fieldHeader.equals("max-players")) {
 							maxPlayers = Integer.parseInt(fieldBody);
 						} else if (fieldHeader.equals("win-condition")) {
-							for (WinCondition condition : WinCondition.values()) {
-								if (condition.toString().equals(fieldBody)) {
+							for (WinCondition condition : possibleWinConditions) {
+								if (condition.getName().equals(fieldBody)) {
 									winCondition = condition;
 									break;
 								}
 							}
-						} else if (fieldHeader.equals("win-condition-arg")) { //Number of points to reach, rectangles or destroy, or seconds to wait until ending the game
-							winConditionArg = Integer.parseInt(fieldBody);
+						} else if (fieldHeader.equals("win-condition-arg")) { //More data on the win condition, interpreted by subclasses of LocalGame
+							winConditionArg = fieldBody;
 						}
 					} else {
 						System.err.println("Malformed \"create-game\" request received from client!");
 					}
 				}
 				
-				localGame = new LocalGame(this, gameName, maxPlayers, winCondition, winConditionArg);
-				localGameThread  = new Thread(localGame, "Skrop 2 Server Game Logic Thread");
+				try {
+					localGame = gameClass.getDeclaredConstructor(Game.class, String.class, int.class, WinCondition.class, String.class).newInstance(this, playerGameName, maxPlayers, winCondition, winConditionArg);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.err.println("Error starting the server-side game!");
+				}
+				
+				//localGame = new SkropGame(this, gameName, maxPlayers, winCondition, winConditionArg);
+				localGameThread  = new Thread(localGame, gameName + " Server Game Logic Thread");
 				localGameThread.start();
 				
-				
-				String winInfoString = "";
-				/*
-				switch (winCondition) {
-				case FIRST_TO_X_POINTS:
-					winInfoString = "is the first to " + winConditionArg + " points";
-					break;
-				}
-				*/
-				
-				System.out.println("Creating a game with name \"" + gameName + "\", max " + maxPlayers + " players, and the winner " + winInfoString);
+				System.out.println("Creating a " + gameName + " game with name \"" + playerGameName + "\", max " + maxPlayers + " players, and " + winCondition.getInfoString(winConditionArg));
 				gameState = GameState.WAITING_FOR_PLAYERS;
 				
 				infoServer.sendString("game-info name:" + localGame.name.replace(' ', '_') + " status:" + gameState.toString() + " max-players:" + localGame.maxPlayers + " players:" + localGame.currentPlayers + " win-condition:" + localGame.winCondition.toString() + " win-condition-arg:" + localGame.winConditionArg); //Return the new game info to the client

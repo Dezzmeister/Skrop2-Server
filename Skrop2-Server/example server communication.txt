@@ -1,6 +1,17 @@
+Client connects to 30200 (TCP), the infoserver
 CLIENT: server-info-request
 INFOSERVER: server-info name:Raoul open-ports:10 game-running:false
 CLIENT: game-info-request
 INFOSERVER: game-info-no-game
 CLIENT: create-game name:Skrop_Game max-players:5 win-condition:TIMER_POINTS win-condition-arg:120
 INFOSERVER: game-info name:Skrop_Game status:WAITING_FOR_PLAYERS max-players:5 players:0 win-condition:TIMER_POINTS win-condition-arg:120
+CLIENT: join-game
+INFOSERVER: port 30500
+CLIENT: quit
+Client loses connection to 30200 (TCP)
+
+Client connects to 30500 (UDP), an available gameserver
+CLIENT: Hello UDP
+
+Client connects to 30500 (TCP), an available gameserver
+CLIENT: init-player name:John
