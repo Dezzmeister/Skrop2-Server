@@ -55,6 +55,8 @@ public class Game {
 	 * @throws IOException if there is an error creating the server sockets
 	 */
 	public Game(final String _gameName, final String _serverName, int infoServerPort, int startPort, int serverCount, final Class<? extends LocalGame> _gameClass, final Class<? extends Player> _playerClass, final WinCondition[] _possibleWinConditions) throws IOException {
+		System.out.println("Starting a " + _gameName + " server named " + _serverName + " with " + serverCount + " consecutive TCP/UDP game server ports, starting at " + startPort + ". The TCP infoserver will run on port " + infoServerPort + ".");
+		
 		gameName = _gameName;
 		serverName = _serverName;
 		
