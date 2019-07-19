@@ -14,4 +14,4 @@ Client connects to 30500 (UDP), an available gameserver
 CLIENT: Hello UDP
 
 Client connects to 30500 (TCP), an available gameserver
-CLIENT: init-player name:John
+CLIENT: init-player name:Jose
