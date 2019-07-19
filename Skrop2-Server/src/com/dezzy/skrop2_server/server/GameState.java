@@ -1,4 +1,4 @@
-package com.dezzy.skrop2_server.game;
+package com.dezzy.skrop2_server.server;
 
 /**
  * General game states. The server is in one of these states at any given time.

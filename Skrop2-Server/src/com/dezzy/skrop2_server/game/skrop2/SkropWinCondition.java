@@ -1,6 +1,6 @@
 package com.dezzy.skrop2_server.game.skrop2;
 
-import com.dezzy.skrop2_server.game.WinCondition;
+import com.dezzy.skrop2_server.server.WinCondition;
 
 /**
  * Skrop 2 win conditions. X represents a number of points, rectangles, or seconds.

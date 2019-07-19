@@ -1,4 +1,4 @@
-package com.dezzy.skrop2_server.game;
+package com.dezzy.skrop2_server.server;
 
 /**
  * Subclasses of this class contain game logic and run the actual game that the players play. Subclasses receive player input events from the {@link GameServer} and send

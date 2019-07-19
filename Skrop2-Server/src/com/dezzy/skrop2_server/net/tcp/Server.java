@@ -8,7 +8,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import com.dezzy.skrop2_server.game.GameServer;
+import com.dezzy.skrop2_server.server.GameServer;
 
 /**
  * Facilitates a TCP connection to another device

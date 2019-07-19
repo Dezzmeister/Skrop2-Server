@@ -1,6 +1,6 @@
 package com.dezzy.skrop2_server.game.skrop2;
 
-import com.dezzy.skrop2_server.game.Player;
+import com.dezzy.skrop2_server.server.Player;
 
 public class SkropPlayer extends Player {
 	public int score = 0;

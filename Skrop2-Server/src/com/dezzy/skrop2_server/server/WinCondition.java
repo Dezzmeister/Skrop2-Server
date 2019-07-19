@@ -1,4 +1,4 @@
-package com.dezzy.skrop2_server.game;
+package com.dezzy.skrop2_server.server;
 
 /**
  * This interface is intended to be implemented by enums that specify several different win conditions.

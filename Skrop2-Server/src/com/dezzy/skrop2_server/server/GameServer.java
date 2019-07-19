@@ -1,4 +1,4 @@
-package com.dezzy.skrop2_server.game;
+package com.dezzy.skrop2_server.server;
 
 import java.io.IOException;
 

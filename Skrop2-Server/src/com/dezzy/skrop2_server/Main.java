@@ -4,10 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import com.dezzy.skrop2_server.game.GameServer;
 import com.dezzy.skrop2_server.game.skrop2.SkropGame;
 import com.dezzy.skrop2_server.game.skrop2.SkropPlayer;
 import com.dezzy.skrop2_server.game.skrop2.SkropWinCondition;
+import com.dezzy.skrop2_server.server.GameServer;
 
 public class Main {
 	private static final int EXPECTED_ARGS = 4;

@@ -1,10 +1,10 @@
 package com.dezzy.skrop2_server.game.skrop2;
 
-import com.dezzy.skrop2_server.game.GameServer;
-import com.dezzy.skrop2_server.game.GameState;
-import com.dezzy.skrop2_server.game.LocalGame;
-import com.dezzy.skrop2_server.game.Player;
-import com.dezzy.skrop2_server.game.WinCondition;
+import com.dezzy.skrop2_server.server.GameServer;
+import com.dezzy.skrop2_server.server.GameState;
+import com.dezzy.skrop2_server.server.LocalGame;
+import com.dezzy.skrop2_server.server.Player;
+import com.dezzy.skrop2_server.server.WinCondition;
 
 /**
  * Controls the game logic for Skrop 2.
