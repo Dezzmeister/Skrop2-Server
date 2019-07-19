@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import com.dezzy.skrop2_server.game.Game;
 import com.dezzy.skrop2_server.game.skrop2.SkropGame;
 import com.dezzy.skrop2_server.game.skrop2.SkropPlayer;
 import com.dezzy.skrop2_server.game.skrop2.SkropWinCondition;

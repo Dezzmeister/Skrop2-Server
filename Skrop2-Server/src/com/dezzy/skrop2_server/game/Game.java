@@ -1,18 +1,14 @@
-package com.dezzy.skrop2_server;
+package com.dezzy.skrop2_server.game;
 
 import java.io.IOException;
 
-import com.dezzy.skrop2_server.game.GameState;
-import com.dezzy.skrop2_server.game.LocalGame;
-import com.dezzy.skrop2_server.game.Player;
-import com.dezzy.skrop2_server.game.WinCondition;
 import com.dezzy.skrop2_server.net.tcp.Server;
 import com.dezzy.skrop2_server.net.udp.UDPServer;
 
 /**
- * Clients that want to join or create a game communicate with the info server first. The info server provides game and
- * server info and tells clients which port to connect to if they want to join a game. If there is no game running, clients can create a game
- * by communicating with the info server. All conversations with the info server should be as quick as possible to allow other clients to communicate.
+ * This class manages the infoserver and the gameservers. This class is responsible for interpreting client messages and managing the {@link LocalGame}.
+ * This class creates the LocalGame, passes client input events to it, and gives the LocalGame access to TCP and UDP send functions. This class contains no
+ * game logic and is intended only to facilitate a general multiplayer game protocol.
  * 
  * @author Dezzmeister
  *
@@ -42,7 +38,9 @@ public class Game {
 	/**
 	 * Creates a Game and opens a TCP socket for the info server as well as several TCP sockets
 	 * for each client. A total of <code>serverCount</code> sockets are opened, with consecutive ports
-	 * starting at <code>startPort</code>.
+	 * starting at <code>startPort</code>. Because this class is responsible for creating a {@link LocalGame} object, interpreting a {@link WinCondition}
+	 * and adding {@link Player Players} to the LocalGame, it needs extra information so it knows which subclasses to instantiate and which WinConditions to
+	 * use. This decouples the server framework from any specific game logic.
 	 * 
 	 * @param _gameName the name of the game running on this server
 	 * @param _serverName the name of the server
@@ -220,6 +218,7 @@ public class Game {
 				if (i == localGame.maxPlayers) { //The game has reached the max number of players
 					infoServer.sendString("game-full");
 				} else {
+					udpServers[i].openForNewClients(); //Tell the UDP server to expect a new client
 					infoServer.sendString("port " + servers[i].port);
 				}
 			}
@@ -272,7 +271,6 @@ public class Game {
 					System.err.println("Error starting the server-side game!");
 				}
 				
-				//localGame = new SkropGame(this, gameName, maxPlayers, winCondition, winConditionArg);
 				localGameThread  = new Thread(localGame, gameName + " Server Game Logic Thread");
 				localGameThread.start();
 				

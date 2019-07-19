@@ -14,17 +14,41 @@ import java.net.SocketException;
  *
  */
 public class UDPServer implements Runnable {
+	/**
+	 * UDP packet size, in bytes
+	 */
 	public static final int UDP_PACKET_MAX_BYTE_LENGTH = 700;
 	
 	private final DatagramSocket socket;
 	
+	/**
+	 * IP of the client to send packets to
+	 */
 	private volatile InetAddress clientIP = null;
+	
+	/**
+	 * UDP port to send packets to
+	 */
 	private int portOut = -1;
 	
+	/**
+	 * UDP port to send packets from
+	 */
 	private int port;
 	
+	/**
+	 * True if the server should continue running
+	 */
 	private volatile boolean isRunning = true;
 	
+	/**
+	 * True if the UDP server should expect a message
+	 */
+	private boolean open = false;
+	
+	/**
+	 * True when the UDP server receives a message from a new client
+	 */
 	private boolean firstReceived = false;
 	private volatile boolean sendMessage = false;
 	private volatile String message = "";
@@ -44,7 +68,7 @@ public class UDPServer implements Runnable {
 	@Override
 	public void run() {
 		while (isRunning) {
-			if (!firstReceived) {
+			if (!firstReceived && open) {
 				DatagramPacket packet = new DatagramPacket(buf, buf.length);
 				try {
 					socket.receive(packet);
@@ -56,6 +80,7 @@ public class UDPServer implements Runnable {
 				portOut = packet.getPort();
 				
 				firstReceived = true;
+				open = false;
 			} else {
 				if (sendMessage) {
 					DatagramPacket packet;
@@ -89,10 +114,27 @@ public class UDPServer implements Runnable {
 		portOut = -1;
 	}
 	
+	/**
+	 * Tells the UDP server to expect a new client. This method must be called before a client tries to send a hello to the server.
+	 */
+	public void openForNewClients() {
+		open = true;
+	}
+	 
+	/**
+	 * True if the UDP server has received a hello from a client and has a target IP and port to send messages to.
+	 * 
+	 * @return true if the UDP server has a client
+	 */
 	public boolean boundToClient() {
 		return firstReceived;
 	}
 	
+	/**
+	 * IP of the client, or null if there is no client.
+	 * 
+	 * @return client IP
+	 */
 	public InetAddress clientIP() {
 		return clientIP;
 	}
@@ -116,6 +158,9 @@ public class UDPServer implements Runnable {
 		message = _message;
 	}
 	
+	/**
+	 * Stop the server and close the {@link java.net.DatagramSocket DatagramSocket}
+	 */
 	public void stopServer() {
 		isRunning = false;
 	}

@@ -8,7 +8,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import com.dezzy.skrop2_server.Game;
+import com.dezzy.skrop2_server.game.Game;
 
 /**
  * Facilitates a TCP connection to another device
@@ -17,19 +17,52 @@ import com.dezzy.skrop2_server.Game;
  *
  */
 public class Server implements Runnable {
-	private final Game game;
-	private final int clientID;
-	public final int port;
 	
+	/**
+	 * The {@link Game} in control of this Server
+	 */
+	private final Game game;
+	
+	/**
+	 * Server identifier
+	 */
+	private final int clientID;
+	
+	/**
+	 * True if the server should close its current connection
+	 */
 	private volatile boolean quit = false;
+	
+	/**
+	 * True if the server should continue running
+	 */
 	private volatile boolean isRunning = true;
 	
 	private final ServerSocket serverSocket;
+	
+	/**
+	 * Server TCP port
+	 */
+	public final int port;
+	
+	/**
+	 * True if the server should try to send the contents of <code>message</code>
+	 */
 	private volatile boolean sendMessage = false;
+	
+	/**
+	 * Contains the next message to be sent to the client
+	 */
 	private volatile String message = "";
 	
-	private volatile InetAddress lastClientIP;
-	
+	/**
+	 * Create a TCP server with the specified {@link Game}.
+	 * 
+	 * @param _game Game object controlling this Server
+	 * @param _port TCP port the server will open on
+	 * @param _clientID number to identify the client connected to this server
+	 * @throws IOException if the {@link java.net.ServerSocket ServerSocket} cannot be created
+	 */
 	public Server(final Game _game, int _port, int _clientID) throws IOException {
 		game = _game;
 		clientID = _clientID;
@@ -44,7 +77,6 @@ public class Server implements Runnable {
 			try (Socket socket = serverSocket.accept();
 					BufferedReader din = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 					DataOutputStream dout = new DataOutputStream(socket.getOutputStream())) {
-				lastClientIP = socket.getInetAddress();
 				
 				String in = "";
 				
@@ -86,21 +118,32 @@ public class Server implements Runnable {
 		}
 	}
 	
+	/**
+	 * Gets the IP of the last client to connect to this server, or the current client if one is connected.
+	 * 
+	 * @return the last client to connect to this server
+	 */
 	public InetAddress lastClientIP() {
-		return lastClientIP;
+		return serverSocket.getInetAddress();
 	}
 	
+	/**
+	 * Forces the server to close its current connection.
+	 */
 	public void closeConnection() {
 		quit = true;
 	}
 	
+	/**
+	 * Stops the server and closes the {@link java.net.ServerSocket ServerSocket}.
+	 */
 	public void stopServer() {
 		quit = true;
 		isRunning = false;
 	}
 	
 	/**
-	 * Tries to send a String to the client.
+	 * Tries to send a String to the client. Appends a carriage return followed by a linefeed ("\r\n") before sending.
 	 * 
 	 * @param _message String to send, with the newline omitted
 	 */

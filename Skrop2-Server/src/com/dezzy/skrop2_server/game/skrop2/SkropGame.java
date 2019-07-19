@@ -1,13 +1,13 @@
 package com.dezzy.skrop2_server.game.skrop2;
 
-import com.dezzy.skrop2_server.Game;
+import com.dezzy.skrop2_server.game.Game;
 import com.dezzy.skrop2_server.game.GameState;
 import com.dezzy.skrop2_server.game.LocalGame;
 import com.dezzy.skrop2_server.game.Player;
 import com.dezzy.skrop2_server.game.WinCondition;
 
 /**
- * Controls the game logic
+ * Controls the game logic for Skrop 2.
  * 
  * @author Dezzmeister
  *

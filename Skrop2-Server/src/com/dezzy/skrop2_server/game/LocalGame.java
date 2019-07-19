@@ -1,7 +1,12 @@
 package com.dezzy.skrop2_server.game;
 
-import com.dezzy.skrop2_server.Game;
-
+/**
+ * Subclasses of this class contain game logic and run the actual game that the players play. Subclasses receive player input events from the {@link Game} and send
+ * crucial game info through the Game to the players. 
+ * 
+ * @author Dezzmeister
+ *
+ */
 public abstract class LocalGame implements Runnable {
 	protected final Game game;
 	public final String name;
@@ -23,8 +28,18 @@ public abstract class LocalGame implements Runnable {
 		winConditionArg = _winConditionArg;
 	}
 	
+	/**
+	 * Processes a client's click at the specified normalized coordinates.
+	 * 
+	 * @param clientID clientID of the client
+	 * @param x x coordinate of the click, from 0 to 1
+	 * @param y y coordinate of the click, from 0 to 1
+	 */
 	public abstract void processClickEvent(int clientID, float x, float y);
 	
+	/**
+	 * Run one game tick
+	 */
 	protected abstract void gameTick();
 	
 	@Override
@@ -40,7 +55,7 @@ public abstract class LocalGame implements Runnable {
 	 * @param clientID clientID of the player that connected and joined the game
 	 * @param name name of the player
 	 */
-	public synchronized void addPlayer(int clientID, final Player newPlayer) {
+	synchronized void addPlayer(int clientID, final Player newPlayer) {
 		players[clientID] = newPlayer;
 		
 		recountPlayers();
@@ -51,7 +66,7 @@ public abstract class LocalGame implements Runnable {
 	 * 
 	 * @param clientID clientID of the player that disconnected
 	 */
-	public synchronized void disconnectPlayer(int clientID) {
+	synchronized void disconnectPlayer(int clientID) {
 		Player oldPlayer = players[clientID];
 		players[clientID] = null;
 		
@@ -63,7 +78,7 @@ public abstract class LocalGame implements Runnable {
 	/**
 	 * Recounts all players to avoid errors that may come from bad client messages
 	 */
-	public synchronized void recountPlayers() {
+	synchronized void recountPlayers() {
 		int playerCount = 0;
 		for (Player player : players) {
 			if (player != null) {
