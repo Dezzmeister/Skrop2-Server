@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import com.dezzy.skrop2_server.game.Game;
+import com.dezzy.skrop2_server.game.GameServer;
 import com.dezzy.skrop2_server.game.skrop2.SkropGame;
 import com.dezzy.skrop2_server.game.skrop2.SkropPlayer;
 import com.dezzy.skrop2_server.game.skrop2.SkropWinCondition;
@@ -24,7 +24,7 @@ public class Main {
 			int gameServerCount = Integer.parseInt(args[3]);
 			
 			@SuppressWarnings("unused")
-			Game game = new Game("Skrop 2", serverName, infoServerPort, gameServerStartPort, gameServerCount, SkropGame.class, SkropPlayer.class, SkropWinCondition.values());
+			GameServer gameServer = new GameServer("Skrop 2", serverName, infoServerPort, gameServerStartPort, gameServerCount, SkropGame.class, SkropPlayer.class, SkropWinCondition.values());
 			
 			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 			while (!reader.readLine().equals("stop"));

@@ -1,6 +1,6 @@
 package com.dezzy.skrop2_server.game.skrop2;
 
-import com.dezzy.skrop2_server.game.Game;
+import com.dezzy.skrop2_server.game.GameServer;
 import com.dezzy.skrop2_server.game.GameState;
 import com.dezzy.skrop2_server.game.LocalGame;
 import com.dezzy.skrop2_server.game.Player;
@@ -28,7 +28,7 @@ public class SkropGame extends LocalGame {
 	private int prevGameSecondsLeft = 0;
 	private int gameSecondsLeft = 0;
 	
-	public SkropGame(final Game _game, final String _name, int _maxPlayers, final WinCondition _winCondition, final String _winConditionArg) {
+	public SkropGame(final GameServer _game, final String _name, int _maxPlayers, final WinCondition _winCondition, final String _winConditionArg) {
 		super(_game, _name, _maxPlayers, _winCondition, _winConditionArg);
 		
 		skropWinCondition = (SkropWinCondition) winCondition;
@@ -37,7 +37,7 @@ public class SkropGame extends LocalGame {
 	
 	@Override
 	public void gameTick() {
-		switch (game.gameState) {
+		switch (gameServer.gameState) {
 		case WAITING_FOR_PLAYERS:
 			startCountdownTime = System.currentTimeMillis();
 			break;
@@ -45,14 +45,14 @@ public class SkropGame extends LocalGame {
 			secondsLeft = (int)(SECONDS_TO_WAIT - ((System.currentTimeMillis() - startCountdownTime)/1000));
 			
 			if (secondsLeft != prevSecondsLeft && secondsLeft != SECONDS_TO_WAIT) {
-				game.broadcastTCP("countdown-timer " + secondsLeft);
+				gameServer.broadcastTCP("countdown-timer " + secondsLeft);
 			}
 			prevSecondsLeft = secondsLeft;
 			if ((System.currentTimeMillis() - startCountdownTime)/1000 > SECONDS_TO_WAIT) {
 				System.out.println("Creating the game world and starting the game...");
 				createGameWorld();
 				gameStartTime = System.currentTimeMillis();
-				game.gameState = GameState.IN_GAME;
+				gameServer.gameState = GameState.IN_GAME;
 			}
 			break;
 		case IN_GAME:
@@ -68,7 +68,7 @@ public class SkropGame extends LocalGame {
 	
 	@Override
 	public void processClickEvent(int clientID, float x, float y) {
-		if (game.gameState == GameState.IN_GAME) {
+		if (gameServer.gameState == GameState.IN_GAME) {
 			int points = gameWorld.checkClick(x, y);
 			
 			if (points > 0) {
@@ -105,7 +105,7 @@ public class SkropGame extends LocalGame {
 			}
 		}
 		
-		game.broadcastTCP(message);
+		gameServer.broadcastTCP(message);
 	}
 	
 	private void createGameWorld() {
@@ -119,12 +119,12 @@ public class SkropGame extends LocalGame {
 		}
 		
 		if (gameSecondsLeft != prevGameSecondsLeft && gameSecondsLeft != winGoal) {
-			game.broadcastTCP("game-timer " + gameSecondsLeft);
+			gameServer.broadcastTCP("game-timer " + gameSecondsLeft);
 		}
 		prevGameSecondsLeft = gameSecondsLeft;
 		
 		if ((System.currentTimeMillis() - gameStartTime)/1000 > winGoal) {
-			game.gameState = GameState.GAME_ENDING;
+			gameServer.gameState = GameState.GAME_ENDING;
 		}
 		
 		gameWorld.update();
@@ -141,7 +141,7 @@ public class SkropGame extends LocalGame {
 		try {
 			if (System.currentTimeMillis() - lastGameWorldBroadcastTime > 1000/GAMEWORLD_BROADCAST_FREQUENCY) {
 				String serializedWorld = gameWorld.serialize();
-				game.broadcastUDP(serializedWorld);
+				gameServer.broadcastUDP(serializedWorld);
 				lastGameWorldBroadcastTime = System.currentTimeMillis();
 			}
 		} catch (Exception e) {
@@ -165,7 +165,7 @@ public class SkropGame extends LocalGame {
 				}
 			}
 			
-			game.broadcastTCP(message);
+			gameServer.broadcastTCP(message);
 			
 			endGameScoresSent = true;
 		}

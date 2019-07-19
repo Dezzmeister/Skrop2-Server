@@ -8,7 +8,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import com.dezzy.skrop2_server.game.Game;
+import com.dezzy.skrop2_server.game.GameServer;
 
 /**
  * Facilitates a TCP connection to another device
@@ -19,9 +19,9 @@ import com.dezzy.skrop2_server.game.Game;
 public class Server implements Runnable {
 	
 	/**
-	 * The {@link Game} in control of this Server
+	 * The {@link GameServer} in control of this Server
 	 */
-	private final Game game;
+	private final GameServer gameServer;
 	
 	/**
 	 * Server identifier
@@ -56,15 +56,15 @@ public class Server implements Runnable {
 	private volatile String message = "";
 	
 	/**
-	 * Create a TCP server with the specified {@link Game}.
+	 * Create a TCP server with the specified {@link GameServer}.
 	 * 
-	 * @param _game Game object controlling this Server
+	 * @param _game GameServer object controlling this Server
 	 * @param _port TCP port the server will open on
 	 * @param _clientID number to identify the client connected to this server
 	 * @throws IOException if the {@link java.net.ServerSocket ServerSocket} cannot be created
 	 */
-	public Server(final Game _game, int _port, int _clientID) throws IOException {
-		game = _game;
+	public Server(final GameServer _game, int _port, int _clientID) throws IOException {
+		gameServer = _game;
 		clientID = _clientID;
 		port = _port;
 		
@@ -86,11 +86,11 @@ public class Server implements Runnable {
 						
 						if (in.equals("quit")) {
 							quit = true;
-							game.processClientEvent(clientID, "quit");
+							gameServer.processClientEvent(clientID, "quit");
 							break;
 						}
 						
-						game.processClientEvent(clientID, in);					
+						gameServer.processClientEvent(clientID, in);					
 					} else {
 						if (sendMessage) {
 							
@@ -107,7 +107,7 @@ public class Server implements Runnable {
 			} catch (Exception e) {
 				System.err.println("Error with TCP server on port " + port + ", processing client quit message");
 				e.printStackTrace();
-				game.processClientEvent(clientID, "quit");
+				gameServer.processClientEvent(clientID, "quit");
 			}
 		}
 		

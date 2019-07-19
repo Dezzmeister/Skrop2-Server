@@ -1,5 +1,11 @@
 package com.dezzy.skrop2_server.game;
 
+/**
+ * A player in a {@link LocalGame}.
+ * 
+ * @author Dezzmeister
+ *
+ */
 public abstract class Player {
 	public final String name;
 	

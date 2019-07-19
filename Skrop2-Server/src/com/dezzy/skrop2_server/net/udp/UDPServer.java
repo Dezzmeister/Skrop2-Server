@@ -140,7 +140,7 @@ public class UDPServer implements Runnable {
 	}
 	
 	/**
-	 * Tell the server to wait for a new client
+	 * Tells the server to wait for a new client
 	 */
 	public void reset() {
 		firstReceived = false;
@@ -149,7 +149,7 @@ public class UDPServer implements Runnable {
 	}
 	
 	/**
-	 * Send a message to the client
+	 * Sends a message to the client
 	 * 
 	 * @param _message String to send to the client
 	 */
@@ -159,7 +159,7 @@ public class UDPServer implements Runnable {
 	}
 	
 	/**
-	 * Stop the server and close the {@link java.net.DatagramSocket DatagramSocket}
+	 * Stops the server and closes the {@link java.net.DatagramSocket DatagramSocket}
 	 */
 	public void stopServer() {
 		isRunning = false;

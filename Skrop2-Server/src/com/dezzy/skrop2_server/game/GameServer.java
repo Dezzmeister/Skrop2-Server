@@ -13,7 +13,7 @@ import com.dezzy.skrop2_server.net.udp.UDPServer;
  * @author Dezzmeister
  *
  */
-public class Game {
+public class GameServer {
 	public volatile GameState gameState = GameState.NO_GAME;
 	
 	private final String gameName;
@@ -36,8 +36,8 @@ public class Game {
 	private final WinCondition[] possibleWinConditions;
 	
 	/**
-	 * Creates a Game and opens a TCP socket for the info server as well as several TCP sockets
-	 * for each client. A total of <code>serverCount</code> sockets are opened, with consecutive ports
+	 * Creates a GameServer and opens a TCP socket for the info server as well as several TCP and UDP sockets
+	 * for each client. A total of <code>serverCount * 2</code> sockets are opened, with consecutive ports
 	 * starting at <code>startPort</code>. Because this class is responsible for creating a {@link LocalGame} object, interpreting a {@link WinCondition}
 	 * and adding {@link Player Players} to the LocalGame, it needs extra information so it knows which subclasses to instantiate and which WinConditions to
 	 * use. This decouples the server framework from any specific game logic.
@@ -52,7 +52,7 @@ public class Game {
 	 * @param _possibleWinConditions every potential win condition, so that the server can pick a default or match a requested win condition
 	 * @throws IOException if there is an error creating the server sockets
 	 */
-	public Game(final String _gameName, final String _serverName, int infoServerPort, int startPort, int serverCount, final Class<? extends LocalGame> _gameClass, final Class<? extends Player> _playerClass, final WinCondition[] _possibleWinConditions) throws IOException {
+	public GameServer(final String _gameName, final String _serverName, int infoServerPort, int startPort, int serverCount, final Class<? extends LocalGame> _gameClass, final Class<? extends Player> _playerClass, final WinCondition[] _possibleWinConditions) throws IOException {
 		System.out.println("Starting a " + _gameName + " server named " + _serverName + " with " + serverCount + " consecutive TCP/UDP game server ports, starting at " + startPort + ". The TCP infoserver will run on port " + infoServerPort + ".");
 		
 		gameName = _gameName;
@@ -219,7 +219,7 @@ public class Game {
 					infoServer.sendString("game-full");
 				} else {
 					udpServers[i].openForNewClients(); //Tell the UDP server to expect a new client
-					infoServer.sendString("port " + servers[i].port);
+					infoServer.sendString("port " + servers[i].port); //Tell the client which port to use
 				}
 			}
 		} else if (header.equals("game-info-request")) { //The client has requested info about the current game
@@ -265,7 +265,7 @@ public class Game {
 				}
 				
 				try {
-					localGame = gameClass.getDeclaredConstructor(Game.class, String.class, int.class, WinCondition.class, String.class).newInstance(this, playerGameName, maxPlayers, winCondition, winConditionArg);
+					localGame = gameClass.getDeclaredConstructor(GameServer.class, String.class, int.class, WinCondition.class, String.class).newInstance(this, playerGameName, maxPlayers, winCondition, winConditionArg);
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.err.println("Error starting the server-side game!");
