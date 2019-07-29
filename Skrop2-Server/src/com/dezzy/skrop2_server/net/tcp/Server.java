@@ -1,9 +1,10 @@
 package com.dezzy.skrop2_server.net.tcp;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -76,7 +77,8 @@ public class Server implements Runnable {
 		while (isRunning) {
 			try (Socket socket = serverSocket.accept();
 					BufferedReader din = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-					DataOutputStream dout = new DataOutputStream(socket.getOutputStream())) {
+					PrintWriter dout = new PrintWriter(new BufferedOutputStream(socket.getOutputStream()))) {
+				System.out.println("Client connected to TCP port " + port);
 				
 				String in = "";
 				
@@ -95,7 +97,7 @@ public class Server implements Runnable {
 						if (sendMessage) {
 							
 							synchronized(message) { //Prevent sendString() from changing the message as it is being sent
-								dout.writeChars(message);
+								dout.println(message);
 							}
 							dout.flush();
 								
@@ -143,12 +145,12 @@ public class Server implements Runnable {
 	}
 	
 	/**
-	 * Tries to send a String to the client. Appends a carriage return followed by a linefeed ("\r\n") before sending.
+	 * Tries to send a String to the client.
 	 * 
 	 * @param _message String to send, with the newline omitted
 	 */
 	public void sendString(final String _message) {
-		message = _message + "\r\n";
+		message = _message;
 		sendMessage = true;
 	}
 }

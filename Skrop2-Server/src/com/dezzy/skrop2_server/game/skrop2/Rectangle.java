@@ -24,7 +24,7 @@ public class Rectangle implements Serializable {
 	public Rectangle(float _x, float _y) {
 		x = _x;
 		y = _y;
-		growthFactor = (float) (0.05 * Math.random() + 0.004f);
+		growthFactor = (float) (0.001 * Math.random() + 0.004f);
 		maxSize = (float) (0.2 * Math.random() + 0.2f);
 		
 		int red = (int)(Math.random() * 256);

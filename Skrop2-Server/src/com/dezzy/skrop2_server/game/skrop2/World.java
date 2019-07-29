@@ -42,8 +42,9 @@ public class World implements Serializable {
 			Rectangle r = rects.get(i);
 			float halfSize = r.size / 2.0f;
 			
-			if (x <= x + halfSize && x >= x - halfSize && y <= y + halfSize && y >= y - halfSize) {
-				int points = (int)(2*r.maxSize/r.size);
+			if (x <= r.x + halfSize && x >= r.x - halfSize && y <= r.y + halfSize && y >= r.y - halfSize) {
+				int points = r.size > 0 ? (int)(2*r.maxSize/r.size) : 0;
+				
 				rects.remove(i);
 				addRandomRectangle();
 				return points;
@@ -53,7 +54,7 @@ public class World implements Serializable {
 		return 0;
 	}
 	
-	private void addRandomRectangle() {
+	private synchronized void addRandomRectangle() {
 		rects.add(new Rectangle((float)Math.random(), (float)Math.random()));
 	}
 	
