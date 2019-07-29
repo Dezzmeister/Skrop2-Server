@@ -103,12 +103,36 @@ public class GameServer {
 		
 		if (header.equals("init-player")) { //A new player has connected to the server
 			if (gameState == GameState.WAITING_FOR_PLAYERS) {
-				String name = body.substring(body.indexOf(":") + 1);
+				String name = "Idiot"; //Default player name
+				int color = 0xFF00FF; //Default player color
+				
+				for (String field : body.split(" ")) {
+					String fieldHeader = field.substring(0, field.indexOf(":"));
+					String fieldBody = field.substring(field.indexOf(":") + 1);
+					
+					if (fieldHeader.equals("name")) {
+						name = fieldBody;
+					} else if (fieldHeader.equals("color")) {
+						color = Integer.parseInt(fieldBody);
+					}
+				}
+				
+				for (Player player : localGame.players) {
+					
+					while (player.hasSimilarColorTo(color)) {
+						int red = (int)(Math.random() * 256);
+						int green = (int)(Math.random() * 256);
+						int blue = (int)(Math.random() * 256);
+						
+						color = (red << 16) | (green << 8) | blue;
+					}
+				}
+				
 				try {
-					Player player = playerClass.getDeclaredConstructor(String.class).newInstance(name);
+					Player player = playerClass.getDeclaredConstructor(String.class, int.class).newInstance(name, color);
 					
 					localGame.addPlayer(clientID, player);
-					System.out.println("Player \"" + name.replace('_', ' ') + "\" has connected to the server on port " + servers[clientID].port);
+					System.out.println("Player \"" + name.replace('_', ' ') + "\" has connected to the server on port " + servers[clientID].port + " with color " + color);
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.err.println("Player \"" + name + "\" tried to connect on port " + servers[clientID].port + " but could not be added to the game, disconnecting...");
@@ -159,7 +183,7 @@ public class GameServer {
 		
 		for (Player player : localGame.players) {
 			if (player != null) {
-				playerList += " name:" + player.name;
+				playerList += " name:" + player.name + " color:" + player.color;
 			}
 		}
 		

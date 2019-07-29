@@ -6,8 +6,8 @@ public class SkropPlayer extends Player {
 	public int score = 0;
 	public int rectsDestroyed = 0;
 	
-	public SkropPlayer(final String _name) {
-		super(_name);
+	public SkropPlayer(final String _name, int _color) {
+		super(_name, _color);
 	}
 	
 	@Override

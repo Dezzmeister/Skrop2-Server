@@ -89,6 +89,7 @@ public class Server implements Runnable {
 						if (in.equals("quit")) {
 							quit = true;
 							gameServer.processClientEvent(clientID, "quit");
+							System.out.println("Client closing connection to TCP port " + port);
 							break;
 						}
 						
