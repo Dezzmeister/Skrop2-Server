@@ -103,7 +103,7 @@ public class GameServer {
 		
 		if (header.equals("init-player")) { //A new player has connected to the server
 			if (gameState == GameState.WAITING_FOR_PLAYERS) {
-				String name = "Idiot"; //Default player name
+				String name = "Jose"; //Default player name
 				int color = 0xFF00FF; //Default player color
 				
 				for (String field : body.split(" ")) {
