@@ -119,7 +119,7 @@ public class GameServer {
 				
 				for (Player player : localGame.players) {
 					
-					while (player.hasSimilarColorTo(color)) {
+					while (player != null && player.hasSimilarColorTo(color)) {
 						int red = (int)(Math.random() * 256);
 						int green = (int)(Math.random() * 256);
 						int blue = (int)(Math.random() * 256);
@@ -132,13 +132,14 @@ public class GameServer {
 					Player player = playerClass.getDeclaredConstructor(String.class, int.class).newInstance(name, color);
 					
 					localGame.addPlayer(clientID, player);
-					System.out.println("Player \"" + name.replace('_', ' ') + "\" has connected to the server on port " + servers[clientID].port + " with color " + color);
+					System.out.println("Player \"" + name.replace('_', ' ') + "\" has connected to the server on port " + servers[clientID].port + " with color " + color + " and clientID " + clientID);
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.err.println("Player \"" + name + "\" tried to connect on port " + servers[clientID].port + " but could not be added to the game, disconnecting...");
 					servers[clientID].closeConnection();
 					udpServers[clientID].reset();
 					inUse[clientID] = false;
+					return;
 				}
 			}
 			
@@ -155,6 +156,8 @@ public class GameServer {
 				udpServers[clientID].reset();				
 				localGame.disconnectPlayer(clientID);
 				inUse[clientID] = false;
+				
+				sendFullPlayerList();
 			}
 		} else if (header.equals("c")) {
 			if (gameState == GameState.IN_GAME) {
@@ -249,7 +252,7 @@ public class GameServer {
 		} else if (header.equals("game-info-request")) { //The client has requested info about the current game
 			System.out.println("Client requesting game info");
 			if (gameState != GameState.NO_GAME) {
-				infoServer.sendString("game-info name:" + localGame.name + " status:" + gameState.toString() + " max-players:" + localGame.maxPlayers + " players:" + localGame.currentPlayers + " win-condition:" + localGame.winCondition.toString() + " win-condition-arg:" + localGame.winConditionArg);
+				infoServer.sendString("game-info name:" + localGame.name.replace(' ', '_') + " status:" + gameState.toString() + " max-players:" + localGame.maxPlayers + " players:" + localGame.currentPlayers + " win-condition:" + localGame.winCondition.toString() + " win-condition-arg:" + localGame.winConditionArg);
 			} else {
 				infoServer.sendString("game-info-no-game");
 			}

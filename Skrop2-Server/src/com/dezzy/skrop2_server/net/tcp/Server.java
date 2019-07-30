@@ -83,7 +83,7 @@ public class Server implements Runnable {
 				String in = "";
 				
 				while (!quit) {
-					if (din.ready()) {						
+					if (din.ready()) {
 						in = din.readLine();
 						
 						if (in.equals("quit")) {
