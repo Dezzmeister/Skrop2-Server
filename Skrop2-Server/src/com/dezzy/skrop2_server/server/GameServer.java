@@ -28,6 +28,8 @@ public class GameServer {
 	private final Thread[] udpServerThreads;
 	private final boolean[] inUse;
 	
+	private final int timeoutMillis;
+	
 	private LocalGame localGame;
 	private Thread localGameThread;
 	
@@ -47,18 +49,21 @@ public class GameServer {
 	 * @param infoServerPort info server port
 	 * @param startPort port of first client server
 	 * @param serverCount number of client servers
+	 * @param _timeoutMillis the number of milliseconds for the servers to wait before a client has timed out
 	 * @param _gameClass the type of game to create when a create-game request is fulfilled
 	 * @param _playerClass the type of player to add to the game
 	 * @param _possibleWinConditions every potential win condition, so that the server can pick a default or match a requested win condition
 	 * @throws IOException if there is an error creating the server sockets
 	 */
-	public GameServer(final String _gameName, final String _serverName, int infoServerPort, int startPort, int serverCount, final Class<? extends LocalGame> _gameClass, final Class<? extends Player> _playerClass, final WinCondition[] _possibleWinConditions) throws IOException {
-		System.out.println("Starting a " + _gameName + " server named " + _serverName + " with " + serverCount + " consecutive TCP/UDP game server ports, starting at " + startPort + ". The TCP infoserver will run on port " + infoServerPort + ".");
+	public GameServer(final String _gameName, final String _serverName, int infoServerPort, int startPort, int serverCount, int _timeoutMillis, final Class<? extends LocalGame> _gameClass, final Class<? extends Player> _playerClass, final WinCondition[] _possibleWinConditions) throws IOException {
+		System.out.println("Starting a " + _gameName + " server named " + _serverName + " with " + serverCount + " consecutive TCP/UDP game server ports, starting at " + startPort + ". The TCP infoserver will run on port " + infoServerPort + ", and clients will be timed out after " + _timeoutMillis + " milliseconds of inativity.");
 		
 		gameName = _gameName;
 		serverName = _serverName;
 		
-		infoServer = new Server(this, infoServerPort, -1);
+		timeoutMillis = _timeoutMillis;
+		
+		infoServer = new Server(this, infoServerPort, -1, timeoutMillis);
 		
 		servers = new Server[serverCount];
 		serverThreads = new Thread[serverCount];
@@ -67,7 +72,7 @@ public class GameServer {
 		inUse = new boolean[serverCount];
 		
 		for (int i = 0; i < serverCount; i++) {
-			servers[i] = new Server(this, startPort + i, i);
+			servers[i] = new Server(this, startPort + i, i, timeoutMillis);
 			serverThreads[i] = new Thread(servers[i], gameName + " " + serverName + " TCP Game Server Thread " + i);
 			serverThreads[i].start();
 			
@@ -151,13 +156,38 @@ public class GameServer {
 				gameState = GameState.BEGINNING;
 				System.out.println("All players are connected, beginning the game");
 			}
-		} else if (header.equals("quit")) {
-			if (clientID >= 0) {
-				udpServers[clientID].reset();				
+		} else if (header.equals("quit") || header.equals("timeout")) {
+			if (clientID >= 0 && inUse[clientID]) {
+				udpServers[clientID].reset();
+				servers[clientID].sendString("timeout");
+				servers[clientID].closeConnection();
 				localGame.disconnectPlayer(clientID);
 				inUse[clientID] = false;
 				
-				sendFullPlayerList();
+				if (header.equals("timeout")) {
+					System.out.println("Client " + clientID + " has timed out, disconnecting");
+				} else {
+					System.out.println("Client " + clientID + " has disconnected");
+				}
+				
+				if (localGame.currentPlayers == 0) {
+					System.out.println("Everybody has disconnected, destroying the game");
+					localGame = null;
+					gameState = GameState.NO_GAME;
+				} else {
+					sendFullPlayerList();
+				}
+			}
+			
+			if (clientID == -1) {
+				infoServer.sendString("timeout");
+				infoServer.closeConnection();
+				
+				if (header.equals("timeout")) {
+					System.out.println("Client has timed out from the infoserver, disconnecting");
+				} else {
+					System.out.println("Client has disconnected from the infoserver");
+				}
 			}
 		} else if (header.equals("c")) {
 			if (gameState == GameState.IN_GAME) {
@@ -224,6 +254,14 @@ public class GameServer {
 		}
 		
 		return true;
+	}
+	
+	public void pollAllClients() {
+		for (int i = 0; i < servers.length; i++) {
+			if (inUse[i] && !servers[i].sendingMessage()) {
+				servers[i].sendString("ping");
+			}
+		}
 	}
 	
 	private void handleInfoMessage(final String header, final String body) {

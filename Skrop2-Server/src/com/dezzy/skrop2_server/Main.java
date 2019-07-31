@@ -10,7 +10,7 @@ import com.dezzy.skrop2_server.game.skrop2.SkropWinCondition;
 import com.dezzy.skrop2_server.server.GameServer;
 
 public class Main {
-	private static final int EXPECTED_ARGS = 4;
+	private static final int EXPECTED_ARGS = 5;
 	
 	public static final void main(String[] args) throws IOException {
 		
@@ -22,9 +22,21 @@ public class Main {
 			int infoServerPort = Integer.parseInt(args[1]);
 			int gameServerStartPort = Integer.parseInt(args[2]);
 			int gameServerCount = Integer.parseInt(args[3]);
+			int timeoutMillis = Integer.parseInt(args[4]);
 			
 			@SuppressWarnings("unused")
-			GameServer gameServer = new GameServer("Skrop 2", serverName, infoServerPort, gameServerStartPort, gameServerCount, SkropGame.class, SkropPlayer.class, SkropWinCondition.values());
+			GameServer gameServer = new GameServer("Skrop 2", serverName, infoServerPort, gameServerStartPort, gameServerCount, timeoutMillis, SkropGame.class, SkropPlayer.class, SkropWinCondition.values());
+			
+			/*
+			Timer timer = new Timer();
+			timer.schedule(new TimerTask() {
+				
+				@Override
+				public void run() {
+					gameServer.pollAllClients();
+				}
+			}, 0, 1000);
+			*/
 			
 			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 			while (!reader.readLine().equals("stop"));

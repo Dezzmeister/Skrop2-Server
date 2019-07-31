@@ -57,17 +57,30 @@ public class Server implements Runnable {
 	private volatile String message = "";
 	
 	/**
+	 * Time (in milliseconds) to wait between messages before considering a client to have timed out 
+	 */
+	private final int timeoutMillis;
+	
+	/**
+	 * Time in milliseconds at which the last message was received from the client, or if no messages have been received yet,
+	 * the time at which the client connected
+	 */
+	private long lastMessageReceived;
+	
+	/**
 	 * Create a TCP server with the specified {@link GameServer}.
 	 * 
 	 * @param _game GameServer object controlling this Server
 	 * @param _port TCP port the server will open on
 	 * @param _clientID number to identify the client connected to this server
+	 * @param _timeoutMillis number of milliseconds to wait between messages before notifying the game server of a timeout
 	 * @throws IOException if the {@link java.net.ServerSocket ServerSocket} cannot be created
 	 */
-	public Server(final GameServer _game, int _port, int _clientID) throws IOException {
+	public Server(final GameServer _game, int _port, int _clientID, int _timeoutMillis) throws IOException {
 		gameServer = _game;
 		clientID = _clientID;
 		port = _port;
+		timeoutMillis = _timeoutMillis;
 		
 		serverSocket = new ServerSocket(port);
 	}
@@ -82,18 +95,23 @@ public class Server implements Runnable {
 				
 				String in = "";
 				
-				while (!quit) {
+				lastMessageReceived = System.currentTimeMillis();
+				while (!quit || sendMessage) {
+					
 					if (din.ready()) {
 						in = din.readLine();
 						
-						if (in.equals("quit")) {
+						lastMessageReceived = System.currentTimeMillis();
+						
+						if (in == null || in.equals("quit")) {
 							quit = true;
 							gameServer.processClientEvent(clientID, "quit");
-							System.out.println("Client closing connection to TCP port " + port);
 							break;
 						}
 						
-						gameServer.processClientEvent(clientID, in);					
+						if (!in.equals("ping")) {
+							gameServer.processClientEvent(clientID, in);
+						}
 					} else {
 						if (sendMessage) {
 							
@@ -103,6 +121,12 @@ public class Server implements Runnable {
 							dout.flush();
 								
 							sendMessage = false;
+						}
+					}
+					
+					if (System.currentTimeMillis() - lastMessageReceived > timeoutMillis) {
+						if (!quit) {
+							gameServer.processClientEvent(clientID, "timeout");
 						}
 					}
 				}
@@ -153,5 +177,14 @@ public class Server implements Runnable {
 	public void sendString(final String _message) {
 		message = _message;
 		sendMessage = true;
+	}
+	
+	/**
+	 * True if the server is waiting to send a message.
+	 * 
+	 * @return true if the server needs to send a message
+	 */
+	public boolean sendingMessage() {
+		return sendMessage;
 	}
 }
