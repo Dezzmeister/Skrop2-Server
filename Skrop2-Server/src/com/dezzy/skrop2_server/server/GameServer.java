@@ -106,7 +106,17 @@ public class GameServer {
 			body = message.substring(message.indexOf(" ") + 1);	
 		}
 		
-		if (header.equals("init-player")) { //A new player has connected to the server
+		if (header.equals("ping")) {
+			if (checkAllPlayersJoined() && checkAllUDPServersBound()) {
+				gameState = GameState.BEGINNING;
+				System.out.println("All players are connected, beginning the game");
+			}
+			
+			if (!udpServers[clientID].boundToClient()) {
+				servers[clientID].sendString("waiting-on-udp");
+			}
+			
+		} else if (header.equals("init-player")) { //A new player has connected to the server
 			if (gameState == GameState.WAITING_FOR_PLAYERS) {
 				String name = "Jose"; //Default player name
 				int color = 0xFF00FF; //Default player color
@@ -150,11 +160,8 @@ public class GameServer {
 			
 			inUse[clientID] = true;
 			
-			broadcastTCP(getFullPlayerList());
-			
-			if (checkAllPlayersJoined() && checkAllUDPServersBound()) {
-				gameState = GameState.BEGINNING;
-				System.out.println("All players are connected, beginning the game");
+			if (!header.equals("ping")) {
+				broadcastTCP(getFullPlayerList());
 			}
 		} else if (header.equals("quit") || header.equals("timeout")) {
 			if (clientID >= 0 && inUse[clientID]) {
@@ -259,14 +266,6 @@ public class GameServer {
 		}
 		
 		return true;
-	}
-	
-	public void pollAllClients() {
-		for (int i = 0; i < servers.length; i++) {
-			if (inUse[i] && !servers[i].sendingMessage()) {
-				servers[i].sendString("ping");
-			}
-		}
 	}
 	
 	private void handleInfoMessage(final String header, final String body) {

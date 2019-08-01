@@ -108,9 +108,8 @@ public class Server implements Runnable {
 							break;
 						}
 						
-						if (!in.equals("ping")) {
-							gameServer.processClientEvent(clientID, in);
-						}
+						
+						gameServer.processClientEvent(clientID, in);
 					} else {
 						
 						String message = null;
