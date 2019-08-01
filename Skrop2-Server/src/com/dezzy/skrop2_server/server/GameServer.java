@@ -197,23 +197,35 @@ public class GameServer {
 				}
 			}
 		} else if (header.equals("c")) {
-			if (gameState == GameState.IN_GAME) {
-				if (body.contains(":")) {
-					try {
-						float x = Float.parseFloat(body.substring(0, body.indexOf(":")));
-						float y = Float.parseFloat(body.substring(body.indexOf(":") + 1));
+			if (gameState == GameState.IN_GAME) {				
+				float x = -1;
+				float y = -1;
+				String aux = null;
+				
+				String[] fields = body.split(" ");
+				for (String field : fields) {
+					if (field.contains(":")) {
+						String fieldHeader = field.substring(0, field.indexOf(":"));
+						String fieldBody = field.substring(field.indexOf(":") + 1);
 						
-						String aux = null;
-						if (body.contains("a:")) {
-							aux = body.substring(body.indexOf("a:") + 2);
+						if (fieldHeader.equals("l")) {
+							try {
+								x = Float.parseFloat(fieldBody.substring(0, fieldBody.indexOf(":")));
+								y = Float.parseFloat(fieldBody.substring(fieldBody.indexOf(":") + 1));
+							} catch (Exception e) {
+								System.err.println("Malformed field in click event! Field:\"" + field + "\" Event:\"" + message + "\"");
+								e.printStackTrace();
+							}
+						} else if (fieldHeader.equals("a")) {
+							aux = fieldBody;
 						}
-						
-						localGame.processClickEvent(clientID, x, y, aux);
-					} catch (Exception e) {
-						e.printStackTrace();
+					} else {
+						System.err.println("Malformed field in click event! Field:\"" + field + "\" Event:\"" + message + "\"");
 					}
-				} else {
-					System.err.println("Malformed body in click event received from client: \"" + body + "\"");
+				}
+				
+				if (x != -1 && y != -1) {
+					localGame.processClickEvent(clientID, x, y, aux);
 				}
 			}
 		} else if (header.equals("chat-message")) {

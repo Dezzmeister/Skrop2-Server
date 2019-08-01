@@ -37,7 +37,7 @@ public class SkropGame extends LocalGame {
 	private static final int WORLD_FRAMES_TO_REMEMBER = 20;
 	
 	/**
-	 * A frame-by-frame timeline of the past <code>WORLD_FRAMES_TO_REMEMBER</code> states of the game world
+	 * A frame-by-frame timeline of the past {@link #WORLD_FRAMES_TO_REMEMBER} states of the game world
 	 */
 	private final LinkedList<World> worldHistory;
 	
@@ -100,6 +100,8 @@ public class SkropGame extends LocalGame {
 			
 			if (gameWorld.timeFrame - timeFrame > WORLD_FRAMES_TO_REMEMBER) {
 				worldIndex = 0;
+			} else if (worldIndex >= worldHistory.size()) {
+				worldIndex = worldHistory.size() - 1;
 			}
 			
 			ScorePair scorePair = worldHistory.get(worldIndex).checkClick(x, y);
@@ -188,6 +190,7 @@ public class SkropGame extends LocalGame {
 		if (worldHistory.size() == WORLD_FRAMES_TO_REMEMBER) {
 			worldHistory.remove();
 		}
+		
 		worldHistory.add(gameWorld.copy());
 		gameWorld.timeFrame++;
 		
@@ -245,14 +248,16 @@ public class SkropGame extends LocalGame {
 			sorted = true;
 			
 			for (int i = 1; i < players.length; i++) {
-				SkropPlayer current = (SkropPlayer) ranked[i];
-				SkropPlayer prev = (SkropPlayer) ranked[i - 1];
-				
-				if ((sortByPoints && current.score > prev.score) || (!sortByPoints && current.rectsDestroyed > prev.rectsDestroyed)) {
-					sorted = false;
-					Player temp = ranked[i - 1];
-					ranked[i - 1] = ranked[i];
-					ranked[i] = temp;
+				if (ranked[i] != null && ranked[i - 1] != null) {
+					SkropPlayer current = (SkropPlayer) ranked[i];
+					SkropPlayer prev = (SkropPlayer) ranked[i - 1];
+					
+					if ((sortByPoints && current.score > prev.score) || (!sortByPoints && current.rectsDestroyed > prev.rectsDestroyed)) {
+						sorted = false;
+						Player temp = ranked[i - 1];
+						ranked[i - 1] = ranked[i];
+						ranked[i] = temp;
+					}
 				}
 			}
 		}

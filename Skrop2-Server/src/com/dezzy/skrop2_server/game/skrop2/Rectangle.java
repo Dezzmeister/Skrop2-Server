@@ -46,6 +46,10 @@ public class Rectangle implements Serializable {
 		dead = _dead;
 	}
 	
+	public static Rectangle createIdentifier(float x, float y, int color) {
+		return new Rectangle(x, y, 0, color, 0, 0, false, true);
+	}
+	
 	@Override
 	public boolean equals(Object object) {
 		if (object == this) return true;
