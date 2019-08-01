@@ -127,7 +127,7 @@ public class GameServer {
 					String fieldBody = field.substring(field.indexOf(":") + 1);
 					
 					if (fieldHeader.equals("name")) {
-						name = fieldBody;
+						name = fieldBody.replace('_', ' ');
 					} else if (fieldHeader.equals("color")) {
 						color = Integer.parseInt(fieldBody);
 					}

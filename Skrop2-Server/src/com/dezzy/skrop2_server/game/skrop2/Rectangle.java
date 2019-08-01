@@ -54,6 +54,22 @@ public class Rectangle implements Serializable {
 		}
 	}
 	
+	public float x() {
+		return x;
+	}
+	
+	public float y() {
+		return y;
+	}
+	
+	public float size() {
+		return size;
+	}
+	
+	public int color() {
+		return color;
+	}
+	
 	public boolean isDead() {
 		return dead;
 	}

@@ -82,7 +82,7 @@ public class UDPServer implements Runnable {
 				firstReceived = true;
 				open = false;
 			} else {
-				if (sendMessage) {
+				if (sendMessage && firstReceived) {
 					DatagramPacket packet;
 					synchronized(message) { //Prevent sendString() from changing the message as it is being used to create a packet
 						for (int i = 0; i < UDP_PACKET_MAX_BYTE_LENGTH; i++) { //Zero the array to destroy old data

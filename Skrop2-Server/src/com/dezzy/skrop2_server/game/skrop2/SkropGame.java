@@ -45,7 +45,7 @@ public class SkropGame extends LocalGame {
 			secondsLeft = (int)(SECONDS_TO_WAIT - ((System.currentTimeMillis() - startCountdownTime)/1000));
 			
 			if (secondsLeft != prevSecondsLeft && secondsLeft != SECONDS_TO_WAIT) {
-				gameServer.broadcastTCP("countdown-timer " + secondsLeft);
+				gameServer.broadcastTCP("countdown-timer " + (secondsLeft + 1));
 			}
 			prevSecondsLeft = secondsLeft;
 			if ((System.currentTimeMillis() - startCountdownTime)/1000 > SECONDS_TO_WAIT) {
