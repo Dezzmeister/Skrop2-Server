@@ -106,8 +106,6 @@ public class GameServer {
 			body = message.substring(message.indexOf(" ") + 1);	
 		}
 		
-		System.out.println(message);
-		
 		if (header.equals("init-player")) { //A new player has connected to the server
 			if (gameState == GameState.WAITING_FOR_PLAYERS) {
 				String name = "Jose"; //Default player name
@@ -207,7 +205,7 @@ public class GameServer {
 				}
 			}
 		} else if (header.equals("chat-message")) {
-			System.out.println("received chat message");
+			
 			if (gameState == GameState.WAITING_FOR_PLAYERS) {
 				broadcastTCP("chat-message " + localGame.players[clientID].name + ":" + body);
 			}
@@ -231,7 +229,6 @@ public class GameServer {
 	}
 	
 	public void broadcastTCP(final String message) {
-		System.out.println("Broadcasting " + message);
 		for (int i = 0; i < servers.length; i++) {
 			servers[i].sendString(message);
 		}
