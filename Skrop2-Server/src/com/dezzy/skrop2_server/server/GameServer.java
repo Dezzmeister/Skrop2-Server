@@ -106,6 +106,8 @@ public class GameServer {
 			body = message.substring(message.indexOf(" ") + 1);	
 		}
 		
+		System.out.println(message);
+		
 		if (header.equals("init-player")) { //A new player has connected to the server
 			if (gameState == GameState.WAITING_FOR_PLAYERS) {
 				String name = "Jose"; //Default player name
@@ -150,7 +152,7 @@ public class GameServer {
 			
 			inUse[clientID] = true;
 			
-			sendFullPlayerList();
+			broadcastTCP(getFullPlayerList());
 			
 			if (checkAllPlayersJoined() && checkAllUDPServersBound()) {
 				gameState = GameState.BEGINNING;
@@ -175,7 +177,7 @@ public class GameServer {
 					localGame = null;
 					gameState = GameState.NO_GAME;
 				} else {
-					sendFullPlayerList();
+					broadcastTCP(getFullPlayerList());
 				}
 			}
 			
@@ -204,6 +206,11 @@ public class GameServer {
 					System.err.println("Malformed body in click event received from client: \"" + body + "\"");
 				}
 			}
+		} else if (header.equals("chat-message")) {
+			System.out.println("received chat message");
+			if (gameState == GameState.WAITING_FOR_PLAYERS) {
+				broadcastTCP("chat-message " + localGame.players[clientID].name + ":" + body);
+			}
 		}
 		
 		if (clientID == -1) {
@@ -211,7 +218,7 @@ public class GameServer {
 		}
 	}
 	
-	private void sendFullPlayerList() {
+	private String getFullPlayerList() {
 		String playerList = "player-list";
 		
 		for (Player player : localGame.players) {
@@ -220,10 +227,11 @@ public class GameServer {
 			}
 		}
 		
-		broadcastTCP(playerList);
+		return playerList;
 	}
 	
 	public void broadcastTCP(final String message) {
+		System.out.println("Broadcasting " + message);
 		for (int i = 0; i < servers.length; i++) {
 			servers[i].sendString(message);
 		}

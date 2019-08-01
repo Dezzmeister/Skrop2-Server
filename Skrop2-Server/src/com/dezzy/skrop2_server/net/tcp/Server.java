@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.dezzy.skrop2_server.server.GameServer;
 
@@ -47,16 +48,6 @@ public class Server implements Runnable {
 	public final int port;
 	
 	/**
-	 * True if the server should try to send the contents of <code>message</code>
-	 */
-	private volatile boolean sendMessage = false;
-	
-	/**
-	 * Contains the next message to be sent to the client
-	 */
-	private volatile String message = "";
-	
-	/**
 	 * Time (in milliseconds) to wait between messages before considering a client to have timed out 
 	 */
 	private final int timeoutMillis;
@@ -66,6 +57,12 @@ public class Server implements Runnable {
 	 * the time at which the client connected
 	 */
 	private long lastMessageReceived;
+	
+	/**
+	 * A FIFO that contains any messages that need to be sent to the client;
+	 * this is better than the old <code>sendMessage</code> flag because multiple messages can wait in a queue instead of destroying any unsent message
+	 */
+	private final ConcurrentLinkedQueue<String> messageQueue;
 	
 	/**
 	 * Create a TCP server with the specified {@link GameServer}.
@@ -82,6 +79,8 @@ public class Server implements Runnable {
 		port = _port;
 		timeoutMillis = _timeoutMillis;
 		
+		messageQueue = new ConcurrentLinkedQueue<String>();
+		
 		serverSocket = new ServerSocket(port);
 	}
 	
@@ -96,10 +95,11 @@ public class Server implements Runnable {
 				String in = "";
 				
 				lastMessageReceived = System.currentTimeMillis();
-				while (!quit || sendMessage) {
+				while (!quit || !messageQueue.isEmpty()) {
 					
 					if (din.ready()) {
 						in = din.readLine();
+						System.out.println(in);
 						
 						lastMessageReceived = System.currentTimeMillis();
 						
@@ -113,14 +113,17 @@ public class Server implements Runnable {
 							gameServer.processClientEvent(clientID, in);
 						}
 					} else {
-						if (sendMessage) {
-							
-							synchronized(message) { //Prevent sendString() from changing the message as it is being sent
-								dout.println(message);
-							}
-							dout.flush();
-								
-							sendMessage = false;
+						
+						String message = null;
+						boolean send = false; //True if any messages need to be sent
+						
+						while ((message = messageQueue.poll()) != null) {
+							dout.println(message);
+							send = true;
+						}
+						
+						if (!send) {
+							dout.flush(); //Flush the buffer once instead of for every waiting message, for performance
 						}
 					}
 					
@@ -175,8 +178,11 @@ public class Server implements Runnable {
 	 * @param _message String to send, with the newline omitted
 	 */
 	public void sendString(final String _message) {
+		/*
 		message = _message;
 		sendMessage = true;
+		*/
+		messageQueue.add(_message);
 	}
 	
 	/**
@@ -185,6 +191,6 @@ public class Server implements Runnable {
 	 * @return true if the server needs to send a message
 	 */
 	public boolean sendingMessage() {
-		return sendMessage;
+		return !messageQueue.isEmpty();
 	}
 }
