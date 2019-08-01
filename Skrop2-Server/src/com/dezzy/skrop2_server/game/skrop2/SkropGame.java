@@ -35,6 +35,12 @@ public class SkropGame extends LocalGame {
 		winGoal = Integer.parseInt(winConditionArg);
 	}
 	
+	/**
+	 * Measured in Hz
+	 */
+	private static final int LOCAL_GAME_UPDATE_FREQUENCY = 60;
+	private long lastGameUpdateTime = 0;
+	
 	@Override
 	public void gameTick() {
 		switch (gameServer.gameState) {
@@ -51,12 +57,16 @@ public class SkropGame extends LocalGame {
 			if ((System.currentTimeMillis() - startCountdownTime)/1000 > SECONDS_TO_WAIT) {
 				System.out.println("Creating the game world and starting the game...");
 				createGameWorld();
+				gameServer.broadcastTCP("game-begin");
 				gameStartTime = System.currentTimeMillis();
 				gameServer.gameState = GameState.IN_GAME;
 			}
 			break;
 		case IN_GAME:
-			inGameTick();
+			if (System.currentTimeMillis() - lastGameUpdateTime > 1000/LOCAL_GAME_UPDATE_FREQUENCY) {
+				inGameTick();
+				lastGameUpdateTime = System.currentTimeMillis();
+			}
 			break;
 		case GAME_ENDING:
 			endGame();
@@ -93,7 +103,7 @@ public class SkropGame extends LocalGame {
 			if (p instanceof SkropPlayer) { //Can't wait for pattern matching in Java
 				SkropPlayer player = (SkropPlayer) p;
 				
-				message += " " + player.name + ":";
+				message += " " + player.name.replace(' ', '_') + ":";
 				
 				if (skropWinCondition.countRects) {
 					message += player.rectsDestroyed;
@@ -135,7 +145,7 @@ public class SkropGame extends LocalGame {
 	/**
 	 * Measured in Hz
 	 */
-	private static final long GAMEWORLD_BROADCAST_FREQUENCY = 60;
+	private static final long GAMEWORLD_BROADCAST_FREQUENCY = 10;
 	
 	private void sendGameWorld() {
 		try {

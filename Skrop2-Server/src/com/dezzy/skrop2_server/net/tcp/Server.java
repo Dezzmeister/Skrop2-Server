@@ -87,6 +87,8 @@ public class Server implements Runnable {
 	@Override
 	public void run() {
 		while (isRunning) {
+			messageQueue.clear();
+			
 			try (Socket socket = serverSocket.accept();
 					BufferedReader din = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 					PrintWriter dout = new PrintWriter(new BufferedOutputStream(socket.getOutputStream()))) {

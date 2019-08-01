@@ -16,7 +16,7 @@ public abstract class LocalGame implements Runnable {
 	public final WinCondition winCondition;
 	public final String winConditionArg;
 	
-	public Player[] players;
+	public final Player[] players;
 	
 	/**
 	 * Creates a LocalGame with the specified parameters. The LocalGame controls game logic and is created/destroyed by the {@link GameServer}.

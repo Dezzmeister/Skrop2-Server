@@ -161,6 +161,7 @@ public class GameServer {
 			
 			inUse[clientID] = true;
 			
+			System.out.println(getFullPlayerList());
 			broadcastTCP(getFullPlayerList());
 		} else if (header.equals("quit") || header.equals("timeout")) {
 			if (clientID >= 0 && inUse[clientID]) {
@@ -213,7 +214,7 @@ public class GameServer {
 		} else if (header.equals("chat-message")) {
 			
 			if (gameState == GameState.WAITING_FOR_PLAYERS) {
-				broadcastTCP("chat-message " + localGame.players[clientID].name + ":" + body);
+				broadcastTCP("chat-message " + localGame.players[clientID].name.replace(' ', '_') + ":" + body);
 			}
 		}
 		
@@ -222,27 +223,31 @@ public class GameServer {
 		}
 	}
 	
-	private String getFullPlayerList() {
+	private synchronized String getFullPlayerList() {
 		String playerList = "player-list";
 		
 		for (Player player : localGame.players) {
 			if (player != null) {
-				playerList += " name:" + player.name + " color:" + player.color;
+				playerList += " name:" + player.name.replace(' ', '_') + " color:" + player.color;
 			}
 		}
 		
 		return playerList;
 	}
 	
-	public void broadcastTCP(final String message) {
+	public synchronized void broadcastTCP(final String message) {
 		for (int i = 0; i < servers.length; i++) {
-			servers[i].sendString(message);
+			if (inUse[i]) {
+				servers[i].sendString(message);
+			}
 		}
 	}
 	
-	public void broadcastUDP(final String message) {
+	public synchronized void broadcastUDP(final String message) {
 		for (int i = 0; i < udpServers.length; i++) {
-			udpServers[i].sendString(message);
+			if (inUse[i] && udpServers[i].boundToClient()) {
+				udpServers[i].sendString(message);
+			}
 		}
 	}
 	
@@ -250,7 +255,7 @@ public class GameServer {
 		return (localGame.currentPlayers == localGame.maxPlayers);
 	}
 	
-	private boolean checkAllUDPServersBound() {
+	private synchronized boolean checkAllUDPServersBound() {
 		for (int i = 0; i < udpServers.length; i++) {
 			if (inUse[i] && !udpServers[i].boundToClient()) {
 				return false;
