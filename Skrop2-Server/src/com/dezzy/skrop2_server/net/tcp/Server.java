@@ -133,10 +133,12 @@ public class Server implements Runnable {
 					}
 				}
 				quit = false;
+				messageQueue.clear();
 			} catch (Exception e) {
 				System.err.println("Error with TCP server on port " + port + ", processing client quit message");
 				e.printStackTrace();
 				gameServer.processClientEvent(clientID, "quit");
+				messageQueue.clear();
 			}
 		}
 		
