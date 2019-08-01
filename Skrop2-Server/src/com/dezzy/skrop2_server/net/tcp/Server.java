@@ -121,7 +121,7 @@ public class Server implements Runnable {
 							send = true;
 						}
 						
-						if (!send) {
+						if (send) {
 							dout.flush(); //Flush the buffer once instead of for every waiting message, for performance
 						}
 					}
