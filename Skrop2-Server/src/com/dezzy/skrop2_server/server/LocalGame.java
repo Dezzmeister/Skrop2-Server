@@ -43,8 +43,9 @@ public abstract class LocalGame implements Runnable {
 	 * @param clientID clientID of the client
 	 * @param x x coordinate of the click, from 0 to 1
 	 * @param y y coordinate of the click, from 0 to 1
+	 * @param aux any auxiliary information that the game may need about a click event
 	 */
-	public abstract void processClickEvent(int clientID, float x, float y);
+	public abstract void processClickEvent(int clientID, float x, float y, final String aux);
 	
 	/**
 	 * Run one game tick

@@ -203,7 +203,12 @@ public class GameServer {
 						float x = Float.parseFloat(body.substring(0, body.indexOf(":")));
 						float y = Float.parseFloat(body.substring(body.indexOf(":") + 1));
 						
-						localGame.processClickEvent(clientID, x, y);
+						String aux = null;
+						if (body.contains("a:")) {
+							aux = body.substring(body.indexOf("a:") + 2);
+						}
+						
+						localGame.processClickEvent(clientID, x, y, aux);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

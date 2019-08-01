@@ -1,6 +1,7 @@
 package com.dezzy.skrop2_server.game.skrop2;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class Rectangle implements Serializable {
 
@@ -32,6 +33,36 @@ public class Rectangle implements Serializable {
 		int blue = (int)(Math.random() * 256);
 		
 		color = (red << 16) | (green << 8) | blue;
+	}
+	
+	private Rectangle(float _x, float _y, float _size, int _color, float _growthFactor, float _maxSize, boolean _growing, boolean _dead) {
+		x = _x;
+		y = _y;
+		size = _size;
+		color = _color;
+		growthFactor = _growthFactor;
+		maxSize = _maxSize;
+		growing = _growing;
+		dead = _dead;
+	}
+	
+	@Override
+	public boolean equals(Object object) {
+		if (object == this) return true;
+		
+		if (!(object instanceof Rectangle)) return false;
+			
+		Rectangle other = (Rectangle) object;
+		return x == other.x && y == other.y && size == other.size && color == other.color;
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(x, y, size, color);
+	}
+	
+	public Rectangle copy() {
+		return new Rectangle(x, y, size, color, growthFactor, maxSize, growing, dead);
 	}
 	
 	public void grow() {

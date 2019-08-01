@@ -17,7 +17,7 @@ public class UDPServer implements Runnable {
 	/**
 	 * UDP packet size, in bytes
 	 */
-	public static final int UDP_PACKET_MAX_BYTE_LENGTH = 700;
+	public static final int UDP_PACKET_MAX_BYTE_LENGTH = 650;
 	
 	private final DatagramSocket socket;
 	
@@ -154,8 +154,8 @@ public class UDPServer implements Runnable {
 	 * @param _message String to send to the client
 	 */
 	public void sendString(final String _message) {
-		sendMessage = true;
 		message = _message;
+		sendMessage = true;
 	}
 	
 	/**
