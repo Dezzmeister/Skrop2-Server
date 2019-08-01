@@ -99,7 +99,6 @@ public class Server implements Runnable {
 					
 					if (din.ready()) {
 						in = din.readLine();
-						System.out.println(in);
 						
 						lastMessageReceived = System.currentTimeMillis();
 						
