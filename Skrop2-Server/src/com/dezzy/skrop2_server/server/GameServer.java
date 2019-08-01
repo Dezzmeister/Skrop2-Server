@@ -107,15 +107,16 @@ public class GameServer {
 		}
 		
 		if (header.equals("ping")) {
-			if (checkAllPlayersJoined() && checkAllUDPServersBound()) {
-				gameState = GameState.BEGINNING;
-				System.out.println("All players are connected, beginning the game");
-			}
-			
-			if (!udpServers[clientID].boundToClient()) {
-				servers[clientID].sendString("waiting-on-udp");
-			}
-			
+			if (gameState == GameState.WAITING_FOR_PLAYERS && clientID != -1) {
+				if (checkAllPlayersJoined() && checkAllUDPServersBound()) {
+					gameState = GameState.BEGINNING;
+					System.out.println("All players are connected, beginning the game");
+				}
+				
+				if (!udpServers[clientID].boundToClient()) {
+					servers[clientID].sendString("waiting-for-udp");
+				}
+			}			
 		} else if (header.equals("init-player")) { //A new player has connected to the server
 			if (gameState == GameState.WAITING_FOR_PLAYERS) {
 				String name = "Jose"; //Default player name
@@ -160,9 +161,7 @@ public class GameServer {
 			
 			inUse[clientID] = true;
 			
-			if (!header.equals("ping")) {
-				broadcastTCP(getFullPlayerList());
-			}
+			broadcastTCP(getFullPlayerList());
 		} else if (header.equals("quit") || header.equals("timeout")) {
 			if (clientID >= 0 && inUse[clientID]) {
 				udpServers[clientID].reset();
@@ -247,15 +246,8 @@ public class GameServer {
 		}
 	}
 	
-	private boolean checkAllPlayersJoined() {
-		int connections = 0;
-		for (boolean playerConnected : inUse) {
-			if (playerConnected) {
-				connections++;
-			}
-		}
-		
-		return (connections == localGame.maxPlayers);
+	private boolean checkAllPlayersJoined() {		
+		return (localGame.currentPlayers == localGame.maxPlayers);
 	}
 	
 	private boolean checkAllUDPServersBound() {
