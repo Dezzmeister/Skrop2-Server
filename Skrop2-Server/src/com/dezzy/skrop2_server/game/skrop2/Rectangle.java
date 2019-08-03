@@ -1,6 +1,10 @@
 package com.dezzy.skrop2_server.game.skrop2;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Base64;
 import java.util.Objects;
 
 public class Rectangle implements Serializable {
@@ -17,8 +21,8 @@ public class Rectangle implements Serializable {
 	float y;
 	float size = 0;
 	final int color;
-	private final transient float growthFactor;
-	final transient float maxSize;
+	private final float growthFactor;
+	final float maxSize;
 	private transient boolean growing = true;
 	private transient boolean dead = false;
 	
@@ -33,6 +37,21 @@ public class Rectangle implements Serializable {
 		int blue = (int)(Math.random() * 256);
 		
 		color = (red << 16) | (green << 8) | blue;
+	}
+	
+	public String encode() {
+		return x + ":" + y + ":" + color + ":" + growthFactor + ":" + maxSize;
+	}
+	
+	public static Rectangle decode(final String encoded) {
+		String[] fields = encoded.split(":");
+		float x = Float.parseFloat(fields[0]);
+		float y = Float.parseFloat(fields[1]);
+		int color = Integer.parseInt(fields[2]);
+		float growthFactor = Float.parseFloat(fields[3]);
+		float maxSize = Float.parseFloat(fields[4]);
+		
+		return new Rectangle(x, y, 0, color, growthFactor, maxSize, true, false);
 	}
 	
 	private Rectangle(float _x, float _y, float _size, int _color, float _growthFactor, float _maxSize, boolean _growing, boolean _dead) {
@@ -87,6 +106,14 @@ public class Rectangle implements Serializable {
 				}
 			}
 		}
+	}
+	
+	public synchronized String serialize() throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ObjectOutputStream oos = new ObjectOutputStream(baos);
+		oos.writeObject(this);
+		oos.close();
+		return Base64.getEncoder().encodeToString(baos.toByteArray());
 	}
 	
 	public float x() {

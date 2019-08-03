@@ -1,8 +1,5 @@
 package com.dezzy.skrop2_server.game.skrop2;
 
-import java.util.LinkedList;
-import java.util.ListIterator;
-
 import com.dezzy.skrop2_server.server.GameServer;
 import com.dezzy.skrop2_server.server.GameState;
 import com.dezzy.skrop2_server.server.LocalGame;
@@ -31,23 +28,11 @@ public class SkropGame extends LocalGame {
 	private int prevGameSecondsLeft = 0;
 	private int gameSecondsLeft = 0;
 	
-	/**
-	 * The game will remember the past 20 world states
-	 */
-	private static final int WORLD_FRAMES_TO_REMEMBER = 20;
-	
-	/**
-	 * A frame-by-frame timeline of the past {@link #WORLD_FRAMES_TO_REMEMBER} states of the game world
-	 */
-	private final LinkedList<World> worldHistory;
-	
 	public SkropGame(final GameServer _game, final String _name, int _maxPlayers, final WinCondition _winCondition, final String _winConditionArg) {
 		super(_game, _name, _maxPlayers, _winCondition, _winConditionArg);
 		
 		skropWinCondition = (SkropWinCondition) winCondition;
 		winGoal = Integer.parseInt(winConditionArg);
-		
-		worldHistory = new LinkedList<World>();
 	}
 	
 	/**
@@ -71,8 +56,9 @@ public class SkropGame extends LocalGame {
 			prevSecondsLeft = secondsLeft;
 			if ((System.currentTimeMillis() - startCountdownTime)/1000 > SECONDS_TO_WAIT) {
 				System.out.println("Creating the game world and starting the game...");
-				createGameWorld();
 				gameServer.broadcastTCP("game-begin");
+				createGameWorld();
+				
 				gameStartTime = System.currentTimeMillis();
 				gameServer.gameState = GameState.IN_GAME;
 			}
@@ -95,17 +81,9 @@ public class SkropGame extends LocalGame {
 	public void processClickEvent(int clientID, float x, float y, final String aux) {
 		
 		if (gameServer.gameState == GameState.IN_GAME) {
-			int timeFrame = Integer.parseInt(aux);
-			int worldIndex = WORLD_FRAMES_TO_REMEMBER - (gameWorld.timeFrame - timeFrame);
 			
-			if (gameWorld.timeFrame - timeFrame > WORLD_FRAMES_TO_REMEMBER) {
-				worldIndex = 0;
-			} else if (worldIndex >= worldHistory.size()) {
-				worldIndex = worldHistory.size() - 1;
-			}
-			
-			ScorePair scorePair = worldHistory.get(worldIndex).checkClick(x, y);
-			int points = scorePair.points;
+			ScoreInfo scoreInfo = gameWorld.checkClick(x, y);
+			int points = scoreInfo.points;
 			
 			if (points > 0) {
 				if (players[clientID] instanceof SkropPlayer) {
@@ -115,36 +93,18 @@ public class SkropGame extends LocalGame {
 					System.err.println("Player \"" + players[clientID].name + "\" is not a valid SkropPlayer!");
 				}
 				
-				String rectInfoString = scorePair.rectangle.x + ":" + scorePair.rectangle.y + ":" + scorePair.rectangle.color;
+				String destroyedRect = "d " + scoreInfo.destroyed.x + ":" + scoreInfo.destroyed.y + ":" + scoreInfo.destroyed.color;
+				String addedRect = "r ";
+				String scoreUpdate = getScoreUpdateString();
 				
-				gameServer.broadcastTCP("d " + rectInfoString);
-				sendScoreUpdate();
+				addedRect += scoreInfo.added.encode();
 				
-				eraseFromHistory(scorePair.rectangle, worldIndex);
+				gameServer.broadcastTCP(destroyedRect + "\r\n" + addedRect + "\r\n" + scoreUpdate);
 			}
 		}
 	}
 	
-	/**
-	 * Literally erases the rectangle from history, so that no other client can destroy it in the future or the past (which would mean
-	 * that it has been destroyed twice). This method literally changes the past, and sometimes even the future (for clients).
-	 * 
-	 * @param rect rectangle to be erased
-	 * @param timeIndex moment at which this rectangle was destroyed (<code>worldHistory</code> index)
-	 */
-	private synchronized void eraseFromHistory(final Rectangle rect, int timeIndex) {
-		
-		ListIterator<World> iterator = worldHistory.listIterator(timeIndex);
-		while(iterator.hasNext() && iterator.next().removeRectangleIfExists(rect, false));
-		
-		iterator = worldHistory.listIterator(timeIndex);
-		while(iterator.hasPrevious() && iterator.previous().removeRectangleIfExists(rect, false));
-		
-		gameWorld.removeRectangleIfExists(rect, true);
-		
-	}
-	
-	private void sendScoreUpdate() {		
+	private String getScoreUpdateString() {		
 		String message = "scores";
 		
 		Player[] ranked = rankPlayers(!skropWinCondition.countRects);
@@ -165,12 +125,21 @@ public class SkropGame extends LocalGame {
 			}
 		}
 		
-		gameServer.broadcastTCP(message);
+		return message;
 	}
 	
 	private void createGameWorld() {
 		gameWorld = new World(10);
-		sendGameWorld();
+		//sendGameWorld();
+		
+		String out = "";
+		for (var r : gameWorld.rects) {
+			out += "\r\nr " + r.encode();
+		}
+		
+		if (!out.isEmpty()) {
+			gameServer.broadcastTCP(out);
+		}
 	}
 	
 	private synchronized void inGameTick() {
@@ -187,23 +156,28 @@ public class SkropGame extends LocalGame {
 			gameServer.gameState = GameState.GAME_ENDING;
 		}
 		
-		if (worldHistory.size() == WORLD_FRAMES_TO_REMEMBER) {
-			worldHistory.remove();
+		ScoreInfo[] rects = gameWorld.update();
+		
+		String out = "";
+		
+		for (var info : rects) {
+			out += "d " + info.destroyed.x + ":" + info.destroyed.y + ":" + info.destroyed.color + "\r\nr " + info.added.encode() + "\r\n";
 		}
 		
-		worldHistory.add(gameWorld.copy());
-		gameWorld.timeFrame++;
-		
-		gameWorld.update();
-		sendGameWorld();
+		if (!out.isEmpty()) {
+			gameServer.broadcastTCP(out);
+		}
+		//sendGameWorld();
 	}
 	
-	private long lastGameWorldBroadcastTime = 0;
+	
+	//private long lastGameWorldBroadcastTime = 0;
 	/**
 	 * Measured in Hz
 	 */
-	private static final long GAMEWORLD_BROADCAST_FREQUENCY = 30;
+	//private static final long GAMEWORLD_BROADCAST_FREQUENCY = 2;
 	
+	/*
 	private void sendGameWorld() {
 		try {
 			if (System.currentTimeMillis() - lastGameWorldBroadcastTime > 1000/GAMEWORLD_BROADCAST_FREQUENCY) {
@@ -216,6 +190,7 @@ public class SkropGame extends LocalGame {
 			e.printStackTrace();
 		}
 	}
+	*/
 	
 	boolean endGameScoresSent = false;
 	

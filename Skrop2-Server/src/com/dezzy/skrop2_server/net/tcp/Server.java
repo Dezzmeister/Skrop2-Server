@@ -94,6 +94,8 @@ public class Server implements Runnable {
 					PrintWriter dout = new PrintWriter(new BufferedOutputStream(socket.getOutputStream()))) {
 				System.out.println("Client connected to TCP port " + port);
 				
+				socket.setTcpNoDelay(true);
+				
 				String in = "";
 				
 				lastMessageReceived = System.currentTimeMillis();
@@ -101,6 +103,7 @@ public class Server implements Runnable {
 					
 					if (din.ready()) {
 						in = din.readLine();
+						//System.out.println("in(" + clientID + "): " + in);
 						
 						lastMessageReceived = System.currentTimeMillis();
 						
@@ -115,14 +118,15 @@ public class Server implements Runnable {
 					} else {
 						
 						String message = null;
-						boolean send = false; //True if any messages need to be sent
 						
+						String out = "";
 						while ((message = messageQueue.poll()) != null) {
-							dout.println(message);
-							send = true;
+							out += message + "\r\n";
 						}
 						
-						if (send) {
+						if (!out.isEmpty()) {
+							dout.println(out.trim());
+							//System.out.println("out(" + clientID + "): " + out);
 							dout.flush(); //Flush the buffer once instead of for every waiting message, for performance
 						}
 					}

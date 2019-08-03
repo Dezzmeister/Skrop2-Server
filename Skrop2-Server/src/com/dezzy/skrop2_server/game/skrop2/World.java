@@ -31,18 +31,23 @@ public class World implements Serializable {
 		}
 	}
 	
-	public synchronized void update() {
+	public synchronized ScoreInfo[] update() {
+		List<ScoreInfo> out = new ArrayList<ScoreInfo>();
+		
 		for (int i = rects.size() - 1; i >= 0; i--) {
 			if (rects.get(i).isDead()) {
-				rects.remove(i);
-				addRandomRectangle();
+				Rectangle destroyed = rects.remove(i);
+				Rectangle added = addRandomRectangle();
+				out.add(new ScoreInfo(destroyed, added, 0));
 			} else {
 				rects.get(i).grow();
 			}
 		}
+		
+		return out.toArray(new ScoreInfo[out.size()]);
 	}
 	
-	public synchronized ScorePair checkClick(float x, float y) {
+	public synchronized ScoreInfo checkClick(float x, float y) {
 		for (int i = rects.size() - 1; i >= 0; i--) {
 			Rectangle r = rects.get(i);
 			float halfSize = r.size / 2.0f;
@@ -50,13 +55,13 @@ public class World implements Serializable {
 			if (x <= r.x + halfSize && x >= r.x - halfSize && y <= r.y + halfSize && y >= r.y - halfSize) {
 				int points = r.size > 0 ? (int)(2*r.maxSize/r.size) : 0;
 				
-				Rectangle rect = rects.remove(i);
-				addRandomRectangle();
-				return new ScorePair(rect, points);
+				Rectangle destroyed = rects.remove(i);
+				Rectangle added = addRandomRectangle();
+				return new ScoreInfo(destroyed, added, points);
 			}
 		}
 		
-		return new ScorePair(null, 0);
+		return new ScoreInfo(null, null, 0);
 	}
 	
 	/**
@@ -100,8 +105,10 @@ public class World implements Serializable {
 		return out;
 	}
 	
-	private synchronized void addRandomRectangle() {
-		rects.add(new Rectangle((float)Math.random(), (float)Math.random()));
+	private synchronized Rectangle addRandomRectangle() {
+		Rectangle out = new Rectangle((float)Math.random(), (float)Math.random());
+		rects.add(out);
+		return out;
 	}
 	
 	public synchronized String serialize() throws IOException {
