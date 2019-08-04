@@ -161,7 +161,6 @@ public class GameServer {
 			
 			inUse[clientID] = true;
 			
-			System.out.println(getFullPlayerList());
 			broadcastTCP(getFullPlayerList());
 		} else if (header.equals("quit") || header.equals("timeout")) {
 			if (clientID >= 0 && inUse[clientID]) {
