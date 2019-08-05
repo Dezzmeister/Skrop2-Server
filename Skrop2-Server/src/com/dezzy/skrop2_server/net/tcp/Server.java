@@ -112,7 +112,7 @@ public class Server implements Runnable {
 				
 				socket.setTcpNoDelay(true);
 				
-				newKey = NetUtils.getRandomKey(1000);
+				newKey = NetUtils.getRandomString(1000);
 				sendString("key " + newKey);
 				
 				String in = "";
